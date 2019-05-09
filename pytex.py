@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import numpy as np
+from pdf2image import convert_from_path
 
 copy_to_clipboard = True
 
@@ -59,7 +60,44 @@ def convert_to_latex_table(**kwargs):
     return table
 
 
+def convert_pdf_to_latex(filename):
+    """Get bounding box of image in pdf.
+    Print the includegraphics command with
+    bb command."""
+
+    image = np.array(convert_from_path(filename)[0])
+    image = np.mean(image, axis=2)  # convert to grayscale
+
+    non_white_pixels = np.where(image!=255)
+
+    xmin = np.min(non_white_pixels[1])
+    xmax = np.max(non_white_pixels[1])
+    ymin = np.min(non_white_pixels[0])
+    ymax = np.max(non_white_pixels[0])
+
+    xfactor = 8.5/image.shape[1]
+    yfactor = 11./image.shape[0]
+
+    bb = str(xfactor*xmin)+'in ' + str(yfactor*ymin)+'in ' +\
+         str(xfactor*xmax)+'in ' + str(yfactor*ymax)+'in'
+
+    latex = '\\includegraphics[bb='+bb+',scale=1]{'+filename+'}'
+
+    print(latex)
+
+    if copy_to_clipboard:
+        pyperclip.copy(latex)  # copy to clipboard
+
+
 if __name__ == "__main__":
 
-    path = input('Enter path to csv file: ')
-    convert_to_latex_table(filename=path)
+    path = input('Enter path to file: ')
+
+    if '.csv' in path:
+        convert_to_latex_table(filename=path)
+
+    elif '.pdf' in path:
+        convert_pdf_to_latex(filename=path)
+
+    else:
+        print('ERROR: unknown file type.')
