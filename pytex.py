@@ -1,4 +1,3 @@
-import os
 import pandas as pd
 import numpy as np
 from pdf2image import convert_from_path
@@ -8,8 +7,9 @@ copy_to_clipboard = True
 try:
     import pyperclip
 
-except ModuleNotFoundError:
+except ImportError:
     copy_to_clipboard = False
+
 
 def convert_to_latex_table(**kwargs):
     """Pass key word argument of filename, which is a path
@@ -33,7 +33,7 @@ def convert_to_latex_table(**kwargs):
     nan_indices = pd.isnull(table)
     table[nan_indices] = ''
 
-    latex_tabular = '\\begin{tabular}{' + 'c'*len(table[0])+'}\n'
+    latex_tabular = '\\begin{tabular}{' + 'c' * len(table[0]) + '}\n'
 
     for row in table:
 
@@ -43,7 +43,7 @@ def convert_to_latex_table(**kwargs):
 
             latex_tabular += str(element)
 
-            if index == len(row)-1:
+            if index == len(row) - 1:
                 latex_tabular += ' \\\\\n'
 
             else:
@@ -68,20 +68,23 @@ def convert_pdf_to_latex(filename):
     image = np.array(convert_from_path(filename)[0])
     image = np.mean(image, axis=2)  # convert to grayscale
 
-    non_white_pixels = np.where(image!=255)
+    non_white_pixels = np.where(image != 255)
 
     xmin = np.min(non_white_pixels[1])
     xmax = np.max(non_white_pixels[1])
     ymin = np.min(non_white_pixels[0])
     ymax = np.max(non_white_pixels[0])
 
-    xfactor = 8.5/image.shape[1]
-    yfactor = 11./image.shape[0]
+    xfactor = 8.5 / image.shape[1]
+    yfactor = 11. / image.shape[0]
 
-    bb = str(xfactor*xmin)+'in ' + str(yfactor*ymin)+'in ' +\
-         str(xfactor*xmax)+'in ' + str(yfactor*ymax)+'in'
+    bb = str(xfactor * xmin) + 'in ' + str(yfactor * ymin) + 'in ' +\
+        str(xfactor * xmax) + 'in ' + str(yfactor * ymax) + 'in'
 
-    latex = '\\includegraphics[bb='+bb+',scale=1]{'+filename+'}'
+    latex = '\\begin{figure}[H]\n'
+    latex += '\t\\centering\n'
+    latex += '\t\\includegraphics[bb=' + bb + ',scale=1]{' + filename + '}\n'
+    latex += '\\end{figure}'
 
     print(latex)
 
@@ -101,3 +104,7 @@ if __name__ == "__main__":
 
     else:
         print('ERROR: unknown file type.')
+
+    while True:
+
+        print('.', flush=True)
